@@ -1,0 +1,326 @@
+---
+title: "River Crossing Puzzles"
+author: "Mark Borg"
+date: "`r Sys.setlocale('LC_ALL', 'English'); format(Sys.time(), '%d %B %Y')`"
+---
+
+
+```{r setup, include=FALSE}
+
+knitr::opts_chunk$set(echo = TRUE)
+getwd()
+knitr::opts_knit$set(root.dir = getwd())
+
+```
+
+
+This R notebook is about **River Crossing Puzzles**.
+
+For a description of these puzzles and how we go about creating the solution presented here, please see [this related blog entry](https://mark-borg.github.io/blog/2016/river-crossing-puzzles/).
+
+
+```{r, message=FALSE, warning=FALSE}
+
+source('solve_river_crossing_puzzles.R')
+
+```
+
+
+**Farmer-Wolf-Goat-Cabbage puzzle**
+
+Setting up the incompatibilities between the different entities as a directed graph. E.g. Wolf (W) eats Goat (G).
+And creating the search space illustrating all possible transitions (moves) that can be done.
+
+
+```{r}
+
+require(igraph)
+
+# the graph showing object incompatibilities
+gr <- make_empty_graph(directed = TRUE)
+gr <- add.vertices(gr, 4, name = c('F', 'W', 'G', 'C'))
+gr <- add.edges(gr, c('W','G', 'G','C'))
+plot(gr)
+
+# create the search space 
+gss <- make_empty_graph(directed=TRUE)
+
+boat.capacity <-2
+farmer.symbol <- 'F'
+
+# create the initial state
+state0 <- list(bank.l = c('F', 'W', 'G', 'C'), bank.r = c(), boat.pos = 1)
+state0 <- make.state.name(state0)
+
+# add the initial state as a node in the search space
+gss <- add.vertices(gss, 1, name=state0$name)
+V(gss)[1]$color <- 'red'
+
+gss <- solve(gss, state0)
+
+gss <- simplify(gss, remove.loops = FALSE, remove.multiple = TRUE)
+
+V(gss)[startsWith(V(gss)$name, '|')]$color <- 'green'
+plot(gss)
+
+```
+
+
+Solving the puzzle by finding valid paths in the search space.
+
+
+```{r}
+
+paths <- get.all.shortest.paths(gss, 'CFGWb|', '|CFGWb')
+print(paths)
+
+paths <- get.all.shortest.paths(gss, V(gss)[endsWith(V(gss)$name, '|')], V(gss)[startsWith(V(gss)$name, '|')])
+print(paths)
+
+```
+
+
+**Farmer-Fox-Chicken-Spider-Caterpillar-Lettuce**
+
+Setting up the incompatibilities between the different entities as a directed graph. E.g. Fox (F) eats Chicken (C).
+And creating the search space illustrating all possible transitions (moves) that can be done.
+
+
+```{r}
+
+# the graph showing object incompatibilities
+gr <- make_empty_graph(directed = TRUE)
+gr <- add.vertices(gr, 6, name = c('M', 'F', 'C', 'S', 'K', 'L'))
+gr <- add.edges(gr, c('F','C', 'C','S', 'S', 'K', 'K', 'L'))
+plot(gr)
+
+# create the search space 
+gss <- make_empty_graph(directed=FALSE)
+
+
+boat.capacity <- 3
+farmer.symbol <- 'M'
+
+# create the initial state
+state0 <- list(bank.l = c('M', 'F', 'C', 'S', 'K', 'L'), bank.r = c(), boat.pos = 1)
+state0 <- make.state.name(state0)
+
+# add the initial state as a node in the search space
+gss <- add.vertices(gss, 1, name=state0$name)
+V(gss)[1]$color <- 'red'
+
+gss <- solve(gss, state0)
+
+gss <- simplify(gss, remove.loops = FALSE, remove.multiple = TRUE)
+
+V(gss)[startsWith(V(gss)$name, '|')]$color <- 'green'
+plot(gss)
+
+```
+
+
+Solving the puzzle by finding valid paths in the search space.
+
+
+```{r}
+
+paths <- get.all.shortest.paths(gss, 'CFKLMSb|', '|CFKLMSb')
+print(paths)
+
+paths <- get.all.shortest.paths(gss, V(gss)[endsWith(V(gss)$name, '|')], V(gss)[startsWith(V(gss)$name, '|')])
+print(paths)
+
+```
+
+
+**Two Wolves, a Dog, a Goat and a Bag of Grain**
+
+Setting up the incompatibilities between the different entities as a directed graph. 
+And creating the search space illustrating all possible transitions (moves) that can be done.
+
+
+```{r}
+
+# the graph showing object incompatibilities
+gr <- make_empty_graph(directed = TRUE)
+gr <- add.vertices(gr, 5, name = c('F', 'W', 'D', 'G', 'B'))
+gr <- add.edges(gr, c('W','D', 'W','G', 'D', 'G', 'G', 'B'))
+plot(gr)
+
+# create the search space 
+gss <- make_empty_graph(directed=FALSE)
+
+
+boat.capacity <- 3
+farmer.symbol <- 'F'
+
+# create the initial state
+state0 <- list(bank.l = c('F', 'W', 'W', 'D', 'G', 'B'), bank.r = c(), boat.pos = 1)
+state0 <- make.state.name(state0)
+
+# add the initial state as a node in the search space
+gss <- add.vertices(gss, 1, name=state0$name)
+V(gss)[1]$color <- 'red'
+
+gss <- solve(gss, state0)
+
+gss <- simplify(gss, remove.loops = FALSE, remove.multiple = TRUE)
+
+V(gss)[startsWith(V(gss)$name, '|')]$color <- 'green'
+plot(gss)
+
+```
+
+
+Solving the puzzle by finding valid paths in the search space.
+
+
+```{r}
+
+paths <- get.all.shortest.paths(gss, 'BDFGWWb|', '|BDFGWWb')
+print(paths)
+
+paths <- get.all.shortest.paths(gss, V(gss)[endsWith(V(gss)$name, '|')], V(gss)[startsWith(V(gss)$name, '|')])
+print(paths)
+
+```
+
+
+**Missionaries and Cannibals**
+
+For this problem, we need to consider counts of objects rather than incompatibilities between object types.
+Thus we will ovveride some of the functions in `solve_river_crossing_puzzles.R` that we have used out-of-the-box for the previous puzzles.
+
+
+```{r}
+
+# for this problem, we need to consider counts of objects rather than incompatibilities between object types; thus override this method
+is.bank.valid <- function(gr, state, side)
+{
+     b <- state[[side]]
+     t <- table(b)
+     num.c <- ifelse(is.na(t['C']), 0, t['C'])
+     num.m <- ifelse(is.na(t['M']), 0, t['M'])
+     return(num.m >= num.c | num.m == 0)
+}
+
+# for this problem, the only rule is that the boat is not empty; thus override this method
+is.transition.valid <- function(transition)
+{
+     return(min(is.na(transition)) == 0)
+}
+
+```
+
+
+We create the search space illustrating all possible transitions (moves) that can be done.
+
+
+```{r}
+
+# the graph showing object incompatibilities; not used in this particular case - we will leave it empty
+gr <- make_empty_graph(directed = TRUE)
+
+# create the search space 
+gss <- make_empty_graph(directed = FALSE)
+
+
+boat.capacity <- 2
+
+# create the initial state
+state0 <- list(bank.l = c('M', 'M', 'M', 'C', 'C', 'C'), bank.r = vector(), boat.pos = 1)
+state0 <- make.state.name(state0)
+
+# add the initial state as a node in the search space
+gss <- add.vertices(gss, 1, name=state0$name)
+V(gss)[1]$color <- 'red'
+
+gss <- solve(gss, state0)
+
+gss <- simplify(gss, remove.loops = FALSE, remove.multiple = TRUE)
+
+V(gss)[startsWith(V(gss)$name, '|')]$color <- 'green'
+plot(gss)
+
+```
+
+
+Solving the puzzle by finding valid paths in the search space.
+
+
+```{r}
+
+paths <- get.all.shortest.paths(gss, 'CCCMMMb|', '|CCCMMMb')
+print(paths)
+
+```
+
+
+**Japanese Family River Crossing Puzzle**
+
+Again, for this puzzle we need to override some of the standard methods in file `solve_river_crossing_puzzles.R`.
+
+
+```{r}
+
+# for this problem, we need to consider complex incompatibilities between object types; thus override this method
+is.bank.valid <- function(gr, state, side)
+{
+    b <- state[[side]]
+    if (! is.element('M',b) & length(b) > 1 & is.element('F',b) & is.element('D',b))     { return (FALSE) }
+    if (! is.element('F',b) & length(b) > 1 & is.element('M',b) & is.element('S',b))     { return (FALSE) }
+    if (! is.element('P',b) & length(b) > 1 & is.element('T',b) & (is.element('F',b) | is.element('M',b) | is.element('S',b) | is.element('D',b)))     { return (FALSE) }
+
+    return(TRUE)
+}
+
+# for this problem, multiple persons can operate the boat; thus override this method
+is.transition.valid <- function(transition)
+{
+     return(is.element('M', transition) | is.element('F', transition) | is.element('P', transition))
+}
+
+```
+
+We create the search space illustrating all possible transitions (moves) that can be done.
+
+
+```{r}
+
+# the graph showing object incompatibilities; not used in this particular case
+gr <- make_empty_graph(directed = TRUE)
+
+# create the search space 
+gss <- make_empty_graph(directed = FALSE)
+
+
+boat.capacity <- 2
+
+# create the initial state
+state0 <- list(bank.l = c('F', 'M', 'P', 'T', 'D', 'D', 'S', 'S'), bank.r = vector(), boat.pos = 1)
+state0 <- make.state.name(state0)
+
+# add the initial state as a node in the search space
+gss <- add.vertices(gss, 1, name=state0$name)
+V(gss)[1]$color <- 'red'
+
+gss <- solve(gss, state0)
+
+gss <- simplify(gss, remove.loops = FALSE, remove.multiple = TRUE)
+
+V(gss)[startsWith(V(gss)$name, '|')]$color <- 'green'
+plot(gss, layout=layout.fruchterman.reingold(gss, niter=10000), vertex.label.cex=0.6)
+
+```
+
+
+Solving the puzzle by finding valid paths in the search space.
+
+
+```{r}
+
+paths <- get.all.shortest.paths(gss, 'DDFMPSSTb|', '|DDFMPSSTb')
+
+```
+
+
